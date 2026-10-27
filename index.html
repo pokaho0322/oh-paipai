@@ -1146,7 +1146,7 @@ function genHand(opts) {
     else if (S.phase === "play") kids = [hudView(), timerView(), tableView(), handView(false), h("p", { class: "hint" }, "切る牌をタップ")];
     else if (S.phase === "review") kids = [hudView(), tableView(), handView(true), reviewView()];
     else kids = [hudView(), resultView()];
-    app.replaceChildren.apply(app, kids);
+    app.replaceChildren.apply(app, kids.filter(function (k) { return k; }));
     if (S && S.phase === "play") startTimer();
   }
 
