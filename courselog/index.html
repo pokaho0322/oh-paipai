@@ -389,7 +389,7 @@ $("#camBtn").onclick = () => { camShots = 0; updateCamCount(); renderCamCats(); 
 async function startStream(){
   stopStream(); $("#camFail").classList.remove("show");
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return camFail();
-  const v = {facingMode: {ideal: facing}, width: {ideal: 1920}, height: {ideal: 1080}};
+  const v = {facingMode: {ideal: facing}, width: {ideal: 3840}, height: {ideal: 2160}, frameRate: {ideal: 60}};
   try {
     try { stream = await navigator.mediaDevices.getUserMedia({video: v, audio: P.set.sound === "on"}); }
     catch(e) { if (e && e.name === "NotAllowedError" && P.set.sound === "on") throw e; stream = await navigator.mediaDevices.getUserMedia({video: v, audio: false}); }
@@ -411,13 +411,19 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && $("#cam").classList.contains("show") && !stream) startStream();
   if (document.visibilityState === "hidden") { if (rec && rec.state === "recording") rec.stop(); stopStream(); }
 });
-$("#photoBtn").onclick = () => {
+$("#photoBtn").onclick = async () => {
   const v = $("#camV"); if (!stream || !v.videoWidth) return;
-  // 縦9:16に切り出して保存
-  const c = document.createElement("canvas"); c.width = 1080; c.height = 1920;
-  drawFit(c.getContext("2d"), v, 1080, 1920);
   const f = $("#flash"); f.style.opacity = .7; setTimeout(() => f.style.opacity = 0, 80);
-  c.toBlob(async b => { if (!b) return; await addMedia(b, "image"); camShots++; updateCamCount(); }, "image/jpeg", .92);
+  const done = async b => { if (!b) return; await addMedia(b, "image"); camShots++; updateCamCount(); };
+  // 使える端末では静止画用の高解像度撮影(無音)を使う
+  const track = stream.getVideoTracks()[0];
+  if (window.ImageCapture && track) {
+    try { const b = await new ImageCapture(track).takePhoto(); if (b && b.size) return done(b); } catch(e) {}
+  }
+  // それ以外はカメラ映像を最大解像度のまま切り出さずに保存
+  const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext("2d").drawImage(v, 0, 0);
+  c.toBlob(done, "image/jpeg", .97);
 };
 function recMime(){
   const l = ["video/mp4;codecs=avc1,mp4a.40.2","video/mp4","video/webm;codecs=vp9,opus","video/webm"];
@@ -428,7 +434,7 @@ $("#recBtn").onclick = () => {
   if (!stream) return;
   if (rec && rec.state === "recording") { rec.stop(); return; }
   const m = recMime(); recChunks = [];
-  try { rec = new MediaRecorder(stream, m ? {mimeType: m, videoBitsPerSecond: 8e6} : {}); } catch(e) { toast("録画に対応していません"); return; }
+  try { rec = new MediaRecorder(stream, m ? {mimeType: m, videoBitsPerSecond: 50e6, audioBitsPerSecond: 256000} : {}); } catch(e) { toast("録画に対応していません"); return; }
   rec.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
   rec.onstop = async () => {
     $("#recBtn").classList.remove("on"); $("#timer").style.display = "none"; clearInterval(recTimer);
@@ -643,7 +649,7 @@ $("#resetBtn").onclick = () => {
 // ================= プレビュー共通 =================
 let pvLoop = null;
 function stopPv(){ cancelAnimationFrame(pvLoop); pvLoop = null; }
-function pvCtx(cv){ const ctx = cv.getContext("2d"); ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0); return ctx; }
+function pvCtx(cv){ const ctx = cv.getContext("2d"); ctx.imageSmoothingQuality = "high"; ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0); return ctx; }
 const pvVideo = document.createElement("video"); pvVideo.playsInline = true; pvVideo.muted = true; pvVideo.preload = "auto";
 async function sourceFor(it){
   if (!it) return null;
@@ -783,7 +789,7 @@ $("#endClose").onclick = () => { $("#endOv").classList.remove("show"); renderMai
 // ================= 書き出し =================
 let result = null;
 function pickMime(){
-  const l = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4;codecs=avc1","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"];
+  const l = ["video/mp4;codecs=avc1.640028,mp4a.40.2","video/mp4;codecs=avc1.4D4028,mp4a.40.2","video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4;codecs=avc1","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"];
   for (const t of l) try { if (MediaRecorder.isTypeSupported(t)) return t; } catch(e) {}
   return "";
 }
@@ -819,7 +825,7 @@ async function runRender(segs, dest){
   $("#rDone").hidden = true; $("#pfill").style.width = "0%";
   const box = $("#rBox"); box.innerHTML = "";
   const canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H; box.appendChild(canvas);
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", {alpha: false}); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
   $("#renderOv").classList.add("show");
   await loadFonts();
   for (const s of segs) {
@@ -828,10 +834,10 @@ async function runRender(segs, dest){
   }
   const bg = await bgImage();
   if (typeof MediaRecorder === "undefined" || !canvas.captureStream) throw new Error("no recorder");
-  const stream = canvas.captureStream(30);
+  const stream = canvas.captureStream(60);
   if (dest) dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
   const mime = pickMime();
-  const rec = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: 10e6} : {});
+  const rec = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: 30e6, audioBitsPerSecond: 256000} : {});
   const chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
   const stopped = new Promise(r => rec.onstop = r);
   const total = segs.reduce((a, s) => a + s.dur, 0); let before = 0;
