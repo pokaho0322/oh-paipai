@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="コースログ">
+<meta name="theme-color" content="#141210">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>コースログ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Old+Mincho:wght@700&family=Noto+Serif+JP:wght@700&family=Zen+Kaku+Gothic+New:wght@700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#141210;--panel:#1d1a17;--line:#2f2a24;--text:#f3ede4;--sub:#a39887;--gold:#c9a66b;--gold2:#e2c48f;--danger:#d9776b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans JP",system-ui,sans-serif}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 110px) env(safe-area-inset-left)}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+header{text-align:center;padding:10px 0 14px}
+.brand{font-family:"Shippori Mincho",serif;font-size:26px;letter-spacing:.12em}
+.status{font-size:11px;color:var(--sub);margin-top:6px}
+.status.warn{color:var(--danger)}
+.sect{margin:22px 4px 10px;display:flex;justify-content:space-between;align-items:baseline}
+.sect h2{font-family:"Shippori Mincho",serif;font-size:17px;margin:0;letter-spacing:.08em}
+.sect span{font-size:11px;color:var(--sub)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+.slot{display:flex;gap:12px;align-items:center;cursor:pointer}
+.slot .pv{width:72px;aspect-ratio:9/16;border-radius:10px;background:#0f0d0b;border:1px dashed #3b342c;overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:22px}
+.slot .pv img{width:100%;height:100%;object-fit:cover}
+.slot .tx{flex:1;min-width:0}
+.slot .t1{font-family:"Shippori Mincho",serif;font-size:16px}
+.slot .t2{font-size:12px;color:var(--sub);margin-top:4px;line-height:1.5}
+.slot .go{color:var(--gold);font-size:13px;font-weight:700}
+.items{display:flex;flex-direction:column;gap:8px}
+.it{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px}
+.it .pv{width:50px;aspect-ratio:9/16;border-radius:8px;overflow:hidden;background:#0f0d0b;flex:none;position:relative}
+.it .pv img{width:100%;height:100%;object-fit:cover}
+.it .pv b{position:absolute;right:3px;bottom:2px;font-size:10px;color:#fff;text-shadow:0 0 3px #000}
+.it .tx{flex:1;min-width:0}
+.it .cat{display:inline-block;font-size:10px;color:var(--gold);border:1px solid #4a3f2f;border-radius:999px;padding:1px 8px}
+.it .main{font-family:"Shippori Mincho",serif;font-size:15px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it .main.none{color:#6d6457;font-family:inherit;font-size:12px}
+.it .meta{font-size:11px;color:var(--sub)}
+.mini{display:flex;flex-direction:column;gap:4px}
+.mini button{background:none;border:1px solid var(--line);color:var(--sub);width:30px;height:26px;border-radius:8px;font-size:11px;padding:0}
+.addrow{display:flex;gap:8px;margin-top:10px}
+.addrow button{flex:1}
+.btn{border:0;border-radius:12px;padding:12px 14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+.btn.gold{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1a140c}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.red{background:transparent;color:var(--danger);border:1px solid #4a2a26}
+.btn.sm{padding:8px 12px;font-size:12px;border-radius:10px}
+.lbl{font-size:11px;color:var(--sub);letter-spacing:.12em;margin:12px 0 6px}
+.lbl:first-child{margin-top:0}
+input[type=text],textarea,select{width:100%;background:#0f0d0b;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font-size:16px;font-family:inherit}
+textarea{resize:vertical;line-height:1.6}
+input:focus,textarea:focus{outline:none;border-color:var(--gold)}
+.seg{display:flex;background:#0f0d0b;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;background:none;border:0;color:var(--sub);padding:9px 0;font-size:13px;font-family:inherit}
+.seg button.on{background:var(--gold);color:#1a140c;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{background:#0f0d0b;border:1px solid var(--line);color:var(--sub);border-radius:999px;padding:6px 12px;font-size:13px;font-family:inherit}
+.chips button.on{border-color:var(--gold);color:var(--gold2)}
+.fonts button{font-size:15px}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;margin-top:12px}
+.chk input{accent-color:var(--gold);width:18px;height:18px}
+.note{font-size:11px;color:var(--sub);line-height:1.7;margin-top:8px}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 28%);z-index:5}
+.bar .inner{max-width:560px;margin:0 auto}
+.total{text-align:center;font-size:12px;color:var(--sub);margin-bottom:6px}
+.total b{color:var(--gold2)}
+.make{width:100%;padding:16px;font-size:16px;letter-spacing:.06em;border-radius:16px}
+.make:disabled{opacity:.35}
+.ov{position:fixed;inset:0;background:rgba(8,7,6,.94);display:none;z-index:20;overflow:auto;padding:calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 20px)}
+.ov.show{display:block}
+.sheet{max-width:460px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px}
+.sheet h3{font-family:"Shippori Mincho",serif;margin:2px 0 12px;font-size:17px;text-align:center}
+.pvbox{width:min(100%,calc(46vh * 9 / 16));aspect-ratio:9/16;margin:0 auto;border-radius:12px;overflow:hidden;background:#000}
+.pvbox canvas,.pvbox video{width:100%;height:100%;display:block;object-fit:cover}
+input[type=range]{width:100%;accent-color:var(--gold);margin:12px 0 2px}
+.hint{font-size:12px;color:var(--sub);text-align:center}
+.row{display:flex;gap:8px;margin-top:12px}
+.row>*{flex:1}
+.strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.strip .s{width:54px;aspect-ratio:9/16;flex:none;border-radius:8px;overflow:hidden;border:2px solid transparent;background:#0f0d0b;padding:0}
+.strip .s.on{border-color:var(--gold)}
+.strip .s img{width:100%;height:100%;object-fit:cover;display:block}
+.strip .s.add{display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:22px;border:1px dashed #3b342c}
+.pbar{height:4px;background:#0f0d0b;border-radius:4px;overflow:hidden;margin:12px 0 4px}
+.pbar i{display:block;height:100%;width:0;background:var(--gold)}
+.msg{font-size:13px;color:var(--sub);text-align:center;min-height:1.4em;margin-top:8px}
+.msg.err{color:var(--danger)}
+/* camera */
+.cam{position:fixed;inset:0;background:#000;z-index:30;display:none}
+.cam.show{display:block}
+.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cam .top{position:absolute;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 10px) 12px 10px;background:linear-gradient(rgba(0,0,0,.6),transparent)}
+.cam .top .r{display:flex;justify-content:space-between;align-items:center}
+.cam .ic{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:999px;padding:8px 14px;font-size:13px;font-family:inherit}
+.cam .chips{margin-top:10px}
+.cam .chips button{background:rgba(0,0,0,.45);border-color:rgba(255,255,255,.2);color:#ddd}
+.cam .chips button.on{border-color:var(--gold);color:var(--gold2)}
+.cam .bot{position:absolute;left:0;right:0;bottom:0;padding:16px 20px calc(env(safe-area-inset-bottom) + 22px);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+.shot{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid #fff;color:#fff;font-size:12px;font-family:inherit}
+.recb{width:78px;height:78px;border-radius:50%;border:4px solid #fff;background:transparent;position:relative;padding:0}
+.recb::after{content:"";position:absolute;inset:8px;border-radius:50%;background:#e5483b;transition:all .2s}
+.recb.on::after{inset:20px;border-radius:8px}
+.cnt{width:58px;text-align:center;color:#fff;font-size:12px}
+.timer{position:absolute;top:calc(env(safe-area-inset-top) + 110px);left:50%;transform:translateX(-50%);background:#e5483b;color:#fff;font-size:13px;border-radius:6px;padding:3px 10px;display:none;font-variant-numeric:tabular-nums}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .25s}
+.camfail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:30px;text-align:center;color:#ddd;font-size:14px;line-height:1.8}
+.camfail.show{display:flex}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 130px);transform:translateX(-50%);background:rgba(30,26,22,.95);border:1px solid var(--line);color:var(--text);font-size:13px;padding:8px 16px;border-radius:999px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">コースログ</div>
+    <div class="status" id="status">読み込み中…</div>
+  </header>
+
+  <div class="sect"><h2>1枚目(表紙)</h2><span>あとから設定できます</span></div>
+  <div class="card slot" id="coverSlot">
+    <div class="pv" id="coverPv">＋</div>
+    <div class="tx"><div class="t1" id="coverT1">まだ設定していません</div><div class="t2" id="coverT2">いちばん良い動画・写真に、店名とエリアを入れます</div></div>
+    <div class="go">編集</div>
+  </div>
+
+  <div class="sect"><h2>素材</h2><span id="itemCount"></span></div>
+  <div class="items" id="items"></div>
+  <div class="addrow">
+    <button class="btn gold" id="camBtn">● 撮影する</button>
+    <button class="btn ghost" id="albumBtn">アルバムから</button>
+  </div>
+  <p class="note">撮った素材はこの端末に自動で保存されます。ホーム画面に戻ったり電源を切ったりしても、続きから撮れます。</p>
+
+  <div class="sect"><h2>最後(店舗情報)</h2><span></span></div>
+  <div class="card slot" id="endSlot">
+    <div class="pv" id="endPv">i</div>
+    <div class="tx"><div class="t1" id="endT1">店舗情報</div><div class="t2" id="endT2">住所・アクセス・営業時間など</div></div>
+    <div class="go">編集</div>
+  </div>
+
+  <div class="sect"><h2>設定</h2><span></span></div>
+  <div class="card">
+    <div class="lbl">フォント</div>
+    <div class="chips fonts" id="fontChips"></div>
+    <div class="lbl">文字の位置(素材)</div>
+    <div class="seg" id="posSeg"><button data-v="safe">下(ボタンに隠れない)</button><button data-v="low">いちばん下</button></div>
+    <div class="lbl">音</div>
+    <div class="seg" id="soundSeg"><button data-v="on">元の音を残す</button><button data-v="off">無音</button></div>
+    <div class="lbl">新しい素材の長さ</div>
+    <div class="seg" id="defLenSeg"><button data-v="1">1秒</button><button data-v="1.5">1.5秒</button><button data-v="2">2秒</button><button data-v="3">3秒</button></div>
+    <label class="chk"><input type="checkbox" id="safeChk">プレビューにTikTokのボタン位置を表示</label>
+    <p class="note">BGMは動画に入れず、TikTokで流行りの音源をつけるのがおすすめです。焼き音などを活かすなら「元の音を残す」に。</p>
+  </div>
+  <div style="text-align:center;margin-top:18px"><button class="btn red sm" id="resetBtn">すべて消して新しく始める</button></div>
+</div>
+
+<div class="bar"><div class="inner">
+  <div class="total" id="total"></div>
+  <button class="btn gold make" id="makeBtn" disabled>動画をつくる</button>
+</div></div>
+
+<input type="file" id="albumInput" accept="video/*,image/*" multiple hidden>
+<input type="file" id="nativeInput" accept="video/*,image/*" capture="environment" hidden>
+
+<!-- カメラ -->
+<div class="cam" id="cam">
+  <video id="camV" playsinline muted autoplay></video>
+  <div class="flash" id="flash"></div>
+  <div class="timer" id="timer">0.0</div>
+  <div class="top">
+    <div class="r"><button class="ic" id="camClose">✕ 閉じる</button><button class="ic" id="camFlip">⟲ 切替</button></div>
+    <div class="chips" id="camCats"></div>
+  </div>
+  <div class="camfail" id="camFail">
+    <div>
+      <div id="camFailMsg">この画面ではアプリ内カメラを使えません。</div>
+      <button class="btn gold" id="nativeBtn" style="margin-top:16px">スマホのカメラで撮る</button>
+      <div style="font-size:12px;color:#999;margin-top:10px">※スマホのカメラアプリではシャッター音が鳴ります</div>
+    </div>
+  </div>
+  <div class="bot">
+    <button class="shot" id="photoBtn">写真</button>
+    <button class="recb" id="recBtn" aria-label="録画"></button>
+    <div class="cnt" id="camCnt"></div>
+  </div>
+</div>
+
+<!-- 素材の編集 -->
+<div class="ov" id="itemOv"><div class="sheet">
+  <h3>素材を編集</h3>
+  <div class="pvbox"><canvas id="itemCv" width="540" height="960"></canvas></div>
+  <div id="itemTrim"><input type="range" id="itemRange" min="0" max="0" step="0.1" value="0"><div class="hint" id="itemHint"></div></div>
+  <div class="lbl">長さ</div>
+  <div class="seg" id="itemLen"><button data-v="0.5">0.5</button><button data-v="1">1秒</button><button data-v="1.5">1.5</button><button data-v="2">2秒</button><button data-v="3">3秒</button></div>
+  <div class="lbl">動画に入れる文字(大)</div>
+  <input type="text" id="itemText" placeholder="例:特選タン塩" maxlength="40">
+  <div class="lbl">小さい文字(価格・ひとことなど)</div>
+  <input type="text" id="itemSub" placeholder="例:¥1,980 / 厚切りで肉汁たっぷり" maxlength="40">
+  <div class="lbl">分類(一覧用・動画には出ません)</div>
+  <div class="chips" id="itemCats"></div>
+  <label class="chk"><input type="checkbox" id="itemSkip">本編では使わない(表紙だけに使う場合など)</label>
+  <div class="row"><button class="btn ghost" id="itemPlay">▶ 再生</button><button class="btn ghost" id="itemCover">1枚目にする</button></div>
+  <div class="row"><button class="btn red" id="itemDel">削除</button><button class="btn gold" id="itemClose">完了</button></div>
+</div></div>
+
+<!-- 表紙の編集 -->
+<div class="ov" id="coverOv"><div class="sheet">
+  <h3>1枚目(表紙)</h3>
+  <div class="pvbox"><canvas id="coverCv" width="540" height="960"></canvas></div>
+  <div class="lbl">使う素材を選ぶ</div>
+  <div class="strip" id="coverStrip"></div>
+  <div id="coverTrim"><input type="range" id="coverRange" min="0" max="0" step="0.1" value="0"><div class="hint" id="coverHint"></div></div>
+  <div class="lbl">長さ</div>
+  <div class="seg" id="coverLen"><button data-v="1">1秒</button><button data-v="1.5">1.5秒</button><button data-v="2">2秒</button><button data-v="3">3秒</button></div>
+  <div class="lbl">店名</div>
+  <input type="text" id="cName" placeholder="店名" maxlength="30">
+  <div class="lbl">エリア</div>
+  <input type="text" id="cArea" placeholder="例:恵比寿" maxlength="30">
+  <div class="lbl">ひとこと・価格(なくてもOK)</div>
+  <input type="text" id="cExtra" placeholder="例:2人で約1.2万円の焼肉コース" maxlength="40">
+  <label class="chk"><input type="checkbox" id="cPR">PR表記を入れる(お店から招待・提供を受けた場合)</label>
+  <div class="row"><button class="btn ghost" id="coverPlay">▶ 再生</button><button class="btn ghost" id="coverClear">表紙なしにする</button></div>
+  <div class="row"><button class="btn gold" id="coverClose">完了</button></div>
+</div></div>
+
+<!-- 店舗情報の編集 -->
+<div class="ov" id="endOv"><div class="sheet">
+  <h3>最後(店舗情報)</h3>
+  <div class="pvbox"><canvas id="endCv" width="540" height="960"></canvas></div>
+  <label class="chk"><input type="checkbox" id="eOn">最後に店舗情報を入れる</label>
+  <div class="lbl">長さ</div>
+  <div class="seg" id="endLen"><button data-v="2">2秒</button><button data-v="3">3秒</button><button data-v="4">4秒</button><button data-v="5">5秒</button></div>
+  <p class="note">店名は表紙で入力したものを使います。空欄の項目は表示されません。</p>
+  <div class="lbl">住所</div><input type="text" id="eAddress" placeholder="例:東京都渋谷区恵比寿1-2-3">
+  <div class="lbl">アクセス</div><input type="text" id="eAccess" placeholder="例:恵比寿駅 徒歩3分">
+  <div class="lbl">営業時間</div><input type="text" id="eHours" placeholder="例:17:00〜24:00">
+  <div class="lbl">定休日</div><input type="text" id="eClosed" placeholder="例:日曜">
+  <div class="lbl">予算</div><input type="text" id="eBudget" placeholder="例:おひとり 8,000円〜">
+  <div class="lbl">予約・席</div><input type="text" id="eReserve" placeholder="例:予約可 / 個室あり">
+  <div class="lbl">その他</div><input type="text" id="eOther" placeholder="例:Instagram @xxxx">
+  <div class="lbl">いちばん下のひとこと</div><input type="text" id="eCta" placeholder="保存して行ってみてね">
+  <div class="lbl">ジャンル(キャプション用)</div><input type="text" id="eGenre" placeholder="例:焼肉">
+  <div class="row"><button class="btn gold" id="endClose">完了</button></div>
+</div></div>
+
+<!-- 書き出し -->
+<div class="ov" id="renderOv"><div class="sheet">
+  <h3 id="rTitle">動画をつくっています</h3>
+  <div class="pvbox" id="rBox"></div>
+  <div class="pbar"><i id="pfill"></i></div>
+  <div class="msg" id="rMsg">画面を開いたままお待ちください</div>
+  <div id="rDone" hidden>
+    <div class="row"><button class="btn gold" id="saveBtn">動画を保存</button></div>
+    <div class="lbl">キャプション案(編集できます)</div>
+    <textarea id="caption" rows="9"></textarea>
+    <div class="row"><button class="btn ghost" id="copyBtn">キャプションをコピー</button></div>
+  </div>
+  <div class="row"><button class="btn ghost" id="rClose">閉じる</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const W = 1080, H = 1920;
+const CATS = ["外観","内装","ドリンク","料理","店員さん","雰囲気","その他"];
+const FONTS = [
+  {k:"shippori", label:"明朝(しっぽり)", css:'"Shippori Mincho", serif'},
+  {k:"zenold", label:"明朝(クラシック)", css:'"Zen Old Mincho", serif'},
+  {k:"notoserif", label:"明朝(すっきり)", css:'"Noto Serif JP", serif'},
+  {k:"gothic", label:"ゴシック", css:'"Zen Kaku Gothic New", sans-serif'}
+];
+const SANS = '"Noto Sans JP", sans-serif';
+
+// ================= 保存(IndexedDB) =================
+let db = null, memMedia = new Map();
+function openDB(){
+  return new Promise((res) => {
+    try {
+      const r = indexedDB.open("courselog", 1);
+      r.onupgradeneeded = () => { const d = r.result; d.createObjectStore("media"); d.createObjectStore("kv"); };
+      r.onsuccess = () => res(r.result); r.onerror = () => res(null);
+      setTimeout(() => res(null), 4000);
+    } catch(e) { res(null); }
+  });
+}
+function tx(store, mode, fn){
+  return new Promise((res, rej) => {
+    try { const t = db.transaction(store, mode); const s = t.objectStore(store); const r = fn(s); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }
+    catch(e) { rej(e); }
+  });
+}
+async function putMedia(id, blob){ memMedia.set(id, blob); if (db) try { await tx("media","readwrite", s => s.put(blob, id)); } catch(e) { setStatus("保存容量が足りない可能性があります", true); } }
+async function getMedia(id){ if (memMedia.has(id)) return memMedia.get(id); if (!db) return null; const b = await tx("media","readonly", s => s.get(id)); if (b) memMedia.set(id, b); return b; }
+async function delMedia(id){ memMedia.delete(id); if (db) try { await tx("media","readwrite", s => s.delete(id)); } catch(e) {} }
+let saveTimer = null;
+function save(){ clearTimeout(saveTimer); saveTimer = setTimeout(async () => { if (db) try { await tx("kv","readwrite", s => s.put(JSON.stringify(P), "project")); } catch(e) {} }, 250); }
+
+// ================= 状態 =================
+const blank = () => ({
+  items: [],
+  cover: {itemId: null, start: 0, len: 1.5, name: "", area: "", extra: "", pr: false},
+  end: {on: true, len: 3, address: "", access: "", hours: "", closed: "", budget: "", reserve: "", other: "", cta: "保存して行ってみてね", genre: ""},
+  set: {font: "shippori", pos: "safe", sound: "on", defLen: 1.5, safe: false},
+  cat: "料理"
+});
+let P = blank();
+const urls = new Map(), imgs = new Map();
+async function urlFor(mediaId){
+  if (urls.has(mediaId)) return urls.get(mediaId);
+  const b = await getMedia(mediaId); if (!b) return null;
+  const u = URL.createObjectURL(b); urls.set(mediaId, u); return u;
+}
+function loadImg(url){ return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = url; }); }
+async function imgFor(it){ if (imgs.has(it.id)) return imgs.get(it.id); const u = await urlFor(it.mediaId); const i = u ? await loadImg(u) : null; if (i) imgs.set(it.id, i); return i; }
+const byId = id => P.items.find(i => i.id === id);
+const fontCss = () => (FONTS.find(f => f.k === P.set.font) || FONTS[0]).css;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+function setStatus(t, warn){ const s = $("#status"); s.textContent = t; s.classList.toggle("warn", !!warn); }
+let toastT; function toast(t){ const e = $("#toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove("show"), 1600); }
+
+// ================= 素材の追加 =================
+function getDuration(url){
+  return new Promise(res => {
+    const v = document.createElement("video"); v.preload = "metadata"; v.muted = true; v.playsInline = true; v.src = url;
+    v.onloadedmetadata = () => { if (isFinite(v.duration)) return res(v.duration); v.currentTime = 1e6; v.ontimeupdate = () => { v.ontimeupdate = null; res(isFinite(v.duration) ? v.duration : 0); }; };
+    v.onerror = () => res(0); setTimeout(() => res(0), 8000);
+  });
+}
+function thumbFrom(el){
+  try { const c = document.createElement("canvas"); c.width = 180; c.height = 320; drawFit(c.getContext("2d"), el, 180, 320); return c.toDataURL("image/jpeg", .75); } catch(e) { return null; }
+}
+function videoThumb(url, t){
+  return new Promise(res => {
+    const v = document.createElement("video"); v.muted = true; v.playsInline = true; v.preload = "auto"; v.src = url;
+    let done = false; const fin = x => { if (!done) { done = true; res(x); } };
+    v.onloadeddata = () => { v.currentTime = Math.max(0.05, t || 0); };
+    v.onseeked = () => fin(thumbFrom(v)); v.onerror = () => fin(null); setTimeout(() => fin(null), 6000);
+  });
+}
+async function addMedia(blob, kind, cat){
+  const id = uid();
+  await putMedia(id, blob);
+  const u = URL.createObjectURL(blob); urls.set(id, u);
+  const it = {id, mediaId: id, kind, cat: cat || P.cat, text: "", sub: "", start: 0, len: P.set.defLen, dur: 0, skip: false, thumb: null};
+  if (kind === "video") {
+    it.dur = await getDuration(u);
+    if (it.dur > it.len + 1) it.start = Math.max(0, +(it.dur/2 - it.len/2).toFixed(1));
+    it.thumb = await videoThumb(u, it.start + .2);
+  } else {
+    const i = await loadImg(u); if (i) { imgs.set(id, i); it.thumb = thumbFrom(i); }
+  }
+  P.items.push(it); save(); renderMain();
+  return it;
+}
+async function addFiles(files, cat){
+  for (const f of files) {
+    const kind = f.type.startsWith("image") ? "image" : "video";
+    await addMedia(f, kind, cat);
+  }
+  if (files.length) toast(`${files.length}件 追加しました`);
+}
+let albumTarget = null; // "cover" のとき表紙に設定
+$("#albumBtn").onclick = () => { albumTarget = null; $("#albumInput").value = ""; $("#albumInput").click(); };
+$("#albumInput").onchange = async e => {
+  const files = [...e.target.files]; const target = albumTarget; albumTarget = null;
+  const before = P.items.length;
+  await addFiles(files);
+  if (target === "cover" && P.items.length > before) { setCover(P.items[before].id); refreshCover(); }
+};
+$("#nativeInput").onchange = async e => { await addFiles([...e.target.files], P.cat); updateCamCount(); };
+
+// ================= カメラ(無音) =================
+let stream = null, facing = "environment", rec = null, recChunks = [], recStart = 0, recTimer = null, camShots = 0;
+function renderCamCats(){
+  const c = $("#camCats"); c.innerHTML = "";
+  CATS.forEach(n => { const b = document.createElement("button"); b.textContent = n; b.className = n === P.cat ? "on" : ""; b.onclick = () => { P.cat = n; save(); renderCamCats(); }; c.appendChild(b); });
+}
+function updateCamCount(){ $("#camCnt").textContent = camShots ? `${camShots}件` : ""; }
+$("#camBtn").onclick = () => { camShots = 0; updateCamCount(); renderCamCats(); $("#cam").classList.add("show"); startStream(); };
+async function startStream(){
+  stopStream(); $("#camFail").classList.remove("show");
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return camFail();
+  const v = {facingMode: {ideal: facing}, width: {ideal: 1920}, height: {ideal: 1080}};
+  try {
+    try { stream = await navigator.mediaDevices.getUserMedia({video: v, audio: P.set.sound === "on"}); }
+    catch(e) { if (e && e.name === "NotAllowedError" && P.set.sound === "on") throw e; stream = await navigator.mediaDevices.getUserMedia({video: v, audio: false}); }
+    const cv = $("#camV"); cv.srcObject = stream; await cv.play().catch(()=>{});
+  } catch(e) { camFail(e); }
+}
+function camFail(e){
+  $("#camFailMsg").textContent = (e && e.name === "NotAllowedError" && !inArtifact())
+    ? "カメラの使用が許可されていません。ブラウザの設定でカメラを許可してください。"
+    : "この画面ではアプリ内カメラ(無音)を使えません。";
+  $("#camFail").classList.add("show");
+}
+function inArtifact(){ try { return window.self !== window.top; } catch(e) { return true; } }
+function stopStream(){ if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } }
+$("#nativeBtn").onclick = () => { $("#nativeInput").value = ""; $("#nativeInput").click(); };
+$("#camClose").onclick = () => { if (rec && rec.state === "recording") rec.stop(); stopStream(); $("#cam").classList.remove("show"); };
+$("#camFlip").onclick = () => { if (rec && rec.state === "recording") return; facing = facing === "environment" ? "user" : "environment"; startStream(); };
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && $("#cam").classList.contains("show") && !stream) startStream();
+  if (document.visibilityState === "hidden") { if (rec && rec.state === "recording") rec.stop(); stopStream(); }
+});
+$("#photoBtn").onclick = () => {
+  const v = $("#camV"); if (!stream || !v.videoWidth) return;
+  // 縦9:16に切り出して保存
+  const c = document.createElement("canvas"); c.width = 1080; c.height = 1920;
+  drawFit(c.getContext("2d"), v, 1080, 1920);
+  const f = $("#flash"); f.style.opacity = .7; setTimeout(() => f.style.opacity = 0, 80);
+  c.toBlob(async b => { if (!b) return; await addMedia(b, "image"); camShots++; updateCamCount(); }, "image/jpeg", .92);
+};
+function recMime(){
+  const l = ["video/mp4;codecs=avc1,mp4a.40.2","video/mp4","video/webm;codecs=vp9,opus","video/webm"];
+  for (const t of l) try { if (MediaRecorder.isTypeSupported(t)) return t; } catch(e) {}
+  return "";
+}
+$("#recBtn").onclick = () => {
+  if (!stream) return;
+  if (rec && rec.state === "recording") { rec.stop(); return; }
+  const m = recMime(); recChunks = [];
+  try { rec = new MediaRecorder(stream, m ? {mimeType: m, videoBitsPerSecond: 8e6} : {}); } catch(e) { toast("録画に対応していません"); return; }
+  rec.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
+  rec.onstop = async () => {
+    $("#recBtn").classList.remove("on"); $("#timer").style.display = "none"; clearInterval(recTimer);
+    const type = (rec.mimeType || m || "video/webm").split(";")[0];
+    const b = new Blob(recChunks, {type}); if (b.size < 1000) return;
+    await addMedia(b, "video"); camShots++; updateCamCount(); toast("保存しました");
+  };
+  rec.start(200); recStart = performance.now();
+  $("#recBtn").classList.add("on"); const tm = $("#timer"); tm.style.display = "block";
+  recTimer = setInterval(() => { const s = (performance.now() - recStart)/1000; tm.textContent = s.toFixed(1); if (s >= 20) rec.stop(); }, 100);
+};
+
+// ================= 描画 =================
+function dims(el){ return el.videoWidth ? [el.videoWidth, el.videoHeight] : [el.naturalWidth || el.width, el.naturalHeight || el.height]; }
+function drawFit(ctx, el, w, h){
+  const [vw, vh] = dims(el); if (!vw) return;
+  const s = Math.max(w/vw, h/vh), dw = vw*s, dh = vh*s;
+  ctx.drawImage(el, (w-dw)/2, (h-dh)/2, dw, dh);
+}
+function drawMedia(ctx, el, kind, t, dur){
+  ctx.fillStyle = "#000"; ctx.fillRect(0,0,W,H);
+  if (!el) return;
+  if (kind === "image") {
+    const z = 1 + .06 * Math.min(1, t / Math.max(dur, .1));
+    ctx.save(); ctx.translate(W/2, H/2); ctx.scale(z, z); ctx.translate(-W/2, -H/2); drawFit(ctx, el, W, H); ctx.restore();
+  } else drawFit(ctx, el, W, H);
+}
+function wrap(ctx, text, maxW){
+  const out = []; let line = "";
+  for (const ch of [...text]) {
+    if (ctx.measureText(line + ch).width > maxW && line) {
+      if ("、。」』)!?ー〜".includes(ch)) { line += ch; continue; }
+      out.push(line); line = ch;
+    } else line += ch;
+  }
+  if (line) out.push(line); return out;
+}
+function fitLines(ctx, text, weight, family, maxW, start, min, maxLines){
+  let size = start;
+  for (;;) { ctx.font = `${weight} ${size}px ${family}`; const l = wrap(ctx, text, maxW); if (l.length <= maxLines || size <= min) return {size, lines: l.slice(0, maxLines)}; size -= 4; }
+}
+function shadow(ctx, on){ ctx.shadowColor = on ? "rgba(0,0,0,.55)" : "transparent"; ctx.shadowBlur = on ? 22 : 0; ctx.shadowOffsetY = on ? 2 : 0; }
+
+function drawCoverText(ctx){
+  const c = P.cover, F = fontCss();
+  const g = ctx.createLinearGradient(0, 0, 0, 1000); g.addColorStop(0, "rgba(0,0,0,.38)"); g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, 1000);
+  ctx.textAlign = "left"; ctx.fillStyle = "#fff"; shadow(ctx, true);
+  let y = 250;
+  if (c.name) {
+    const r = fitLines(ctx, c.name, 700, F, 840, 160, 84, 2); ctx.font = `700 ${r.size}px ${F}`;
+    let maxw = 0;
+    r.lines.forEach(l => { y += r.size * 1.05; ctx.fillText(l, 150, y); maxw = Math.max(maxw, ctx.measureText(l).width); });
+    y += r.size * .45;
+    shadow(ctx, false); ctx.fillStyle = "rgba(255,255,255,.95)";
+    ctx.fillRect(40, y, Math.min(980, Math.max(520, 150 + maxw + 80)), 4);
+    shadow(ctx, true); ctx.fillStyle = "#fff";
+  }
+  if (c.area) {
+    const r = fitLines(ctx, c.area, 700, F, 840, 116, 64, 2); ctx.font = `700 ${r.size}px ${F}`;
+    y += 40;
+    r.lines.forEach(l => { y += r.size * 1.1; ctx.fillText(l, 120, y); });
+  }
+  if (c.extra) {
+    const r = fitLines(ctx, c.extra, 700, F, 840, 58, 40, 2); ctx.font = `700 ${r.size}px ${F}`;
+    y += 36;
+    r.lines.forEach(l => { y += r.size * 1.3; ctx.fillText(l, 124, y); });
+  }
+  shadow(ctx, false);
+  if (c.pr) {
+    ctx.font = `700 34px ${SANS}`; ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(0,0,0,.45)"; roundRect(ctx, W-120-86, 150, 86, 50, 8); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.fillText("PR", W-120-20, 188); ctx.textAlign = "left";
+  }
+}
+function roundRect(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+function drawCaption(ctx, it, t){
+  if (!it.text && !it.sub) return;
+  const F = fontCss(), bottom = P.set.pos === "low" ? 1500 : 1250;
+  const g = ctx.createLinearGradient(0, bottom - 560, 0, Math.min(H, bottom + 300));
+  g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,.55)");
+  ctx.fillStyle = g; ctx.fillRect(0, bottom - 560, W, H - bottom + 560);
+  ctx.globalAlpha = Math.min(1, Math.max(0, (t + .05) / .25));
+  ctx.textAlign = "left"; let y = bottom;
+  if (it.sub) {
+    ctx.font = `700 44px ${F}`; const l = wrap(ctx, it.sub, 660).slice(0, 2);
+    shadow(ctx, true); ctx.fillStyle = "#f1dcb0";
+    for (let i = l.length - 1; i >= 0; i--) { ctx.fillText(l[i], 120, y); y -= 60; }
+    shadow(ctx, false); ctx.fillStyle = "rgba(226,196,143,.9)"; ctx.fillRect(120, y + 8, 90, 3);
+    y -= 44;
+  }
+  if (it.text) {
+    const r = fitLines(ctx, it.text, 700, F, 660, 88, 56, 3); ctx.font = `700 ${r.size}px ${F}`;
+    shadow(ctx, true); ctx.fillStyle = "#fff";
+    for (let i = r.lines.length - 1; i >= 0; i--) { ctx.fillText(r.lines[i], 120, y); y -= r.size * 1.28; }
+  }
+  shadow(ctx, false); ctx.globalAlpha = 1;
+}
+
+function endRows(){
+  const e = P.end;
+  return [["住所", e.address], ["アクセス", e.access], ["営業時間", e.hours], ["定休日", e.closed], ["予算", e.budget], ["予約・席", e.reserve], ["", e.other]].filter(r => r[1]);
+}
+function drawEnd(ctx, bg, t){
+  const F = fontCss();
+  ctx.fillStyle = "#0d0b09"; ctx.fillRect(0,0,W,H);
+  if (bg) { // 背景:表紙をぼかして暗く
+    const s = document.createElement("canvas"); s.width = 36; s.height = 64; drawFit(s.getContext("2d"), bg, 36, 64);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high"; ctx.drawImage(s, -40, -60, W+80, H+120);
+  }
+  ctx.fillStyle = "rgba(12,10,8,.72)"; ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha = Math.min(1, Math.max(0, t / .3));
+  ctx.strokeStyle = "rgba(201,166,107,.6)"; ctx.lineWidth = 2; ctx.strokeRect(70, 70, W-140, H-140);
+  ctx.textAlign = "center"; ctx.fillStyle = "#c9a66b"; ctx.font = `500 30px ${SANS}`;
+  spaced(ctx, "SHOP INFO", W/2, 330, 10);
+  let y = 330;
+  const name = P.cover.name || "";
+  if (name) {
+    const r = fitLines(ctx, name, 700, F, 840, 96, 60, 2); ctx.font = `700 ${r.size}px ${F}`; ctx.fillStyle = "#fff";
+    r.lines.forEach(l => { y += r.size * 1.25; ctx.fillText(l, W/2, y); });
+  }
+  y += 50; ctx.fillStyle = "#c9a66b"; ctx.fillRect(W/2 - 50, y, 100, 3);
+  // 行をレイアウト(入りきらなければ縮小)
+  const rows = endRows(), top = y + 40, limit = 1150;
+  let k = 1;
+  for (; k > .6; k -= .05) { if (layoutRows(ctx, rows, top, k, F, false) <= limit) break; }
+  layoutRows(ctx, rows, top, k, F, true);
+  if (P.end.cta) { ctx.textAlign = "center"; ctx.fillStyle = "#e2c48f"; ctx.font = `700 46px ${F}`; ctx.fillText(P.end.cta, W/2, 1240); }
+  ctx.globalAlpha = 1; ctx.textAlign = "left";
+}
+function layoutRows(ctx, rows, y, k, F, draw){
+  ctx.textAlign = "left";
+  for (const [lab, val] of rows) {
+    if (lab) { y += 34*k; if (draw) { ctx.font = `500 ${30*k}px ${SANS}`; ctx.fillStyle = "#c9a66b"; spaced(ctx, lab, 150, y, 4); } y += 14*k; }
+    ctx.font = `700 ${44*k}px ${F}`; const l = wrap(ctx, val, 640);
+    l.forEach(s => { y += 58*k; if (draw) { ctx.fillStyle = "#f3ede4"; ctx.fillText(s, 150, y); } });
+    y += 30*k;
+  }
+  return y;
+}
+function spaced(ctx, text, x, y, sp){
+  const ch = [...text]; const tot = ch.reduce((a,c) => a + ctx.measureText(c).width, 0) + sp*(ch.length-1);
+  let cx = ctx.textAlign === "center" ? x - tot/2 : x; const al = ctx.textAlign; ctx.textAlign = "left";
+  ch.forEach(c => { ctx.fillText(c, cx, y); cx += ctx.measureText(c).width + sp; }); ctx.textAlign = al;
+}
+function drawSafe(ctx){
+  ctx.fillStyle = "rgba(255,60,60,.22)";
+  ctx.fillRect(0,0,W,240); ctx.fillRect(0,H-660,W,660); ctx.fillRect(0,240,120,H-900);
+  ctx.fillRect(W-120,240,120,600); ctx.fillRect(W-300,840,300,H-1500);
+}
+async function loadFonts(){ try { await Promise.all([document.fonts.load(`700 60px ${fontCss()}`), document.fonts.load(`500 30px ${SANS}`)]); } catch(e) {} }
+
+// ================= メイン画面 =================
+function renderMain(){
+  // 表紙
+  const c = P.cover, ci = c.itemId && byId(c.itemId);
+  $("#coverPv").innerHTML = ci && ci.thumb ? `<img src="${ci.thumb}" alt="">` : "＋";
+  $("#coverT1").textContent = c.name || (ci ? "店名を入れましょう" : "まだ設定していません");
+  $("#coverT2").textContent = ci ? [c.area, c.extra].filter(Boolean).join(" ・ ") || "エリアを入れましょう" : "いちばん良い動画・写真に、店名とエリアを入れます";
+  // 素材
+  const list = $("#items"); list.innerHTML = "";
+  P.items.forEach((it, i) => {
+    const el = document.createElement("div"); el.className = "it";
+    el.innerHTML = `<div class="pv">${it.thumb ? `<img src="${it.thumb}" alt="">` : ""}<b>${it.kind === "video" ? "▶" : "▣"}</b></div>
+      <div class="tx"><span class="cat"></span><div class="main"></div><div class="meta"></div></div>
+      <div class="mini"><button>▲</button><button>▼</button></div>`;
+    el.querySelector(".cat").textContent = it.cat;
+    const m = el.querySelector(".main");
+    if (it.text || it.sub) m.textContent = it.text || it.sub; else { m.textContent = "文字なし"; m.classList.add("none"); }
+    el.querySelector(".meta").textContent = it.skip ? "本編では使わない" : `${it.len}秒${P.cover.itemId === it.id ? " ・ 1枚目にも使用" : ""}`;
+    el.querySelector(".tx").onclick = el.querySelector(".pv").onclick = () => openItem(it);
+    const [up, dn] = el.querySelectorAll(".mini button");
+    up.onclick = () => move(i, -1); dn.onclick = () => move(i, 1);
+    list.appendChild(el);
+  });
+  if (!P.items.length) list.innerHTML = `<div class="card" style="text-align:center;color:var(--sub);font-size:13px;padding:22px">外観・ドリンク・料理・店員さん・雰囲気など、<br>好きな順に撮っていきましょう</div>`;
+  $("#itemCount").textContent = `${P.items.length}件`;
+  // 店舗情報
+  $("#endT1").textContent = P.end.on ? "店舗情報を表示" : "表示しない";
+  $("#endT2").textContent = P.end.on ? (endRows().map(r => r[1]).slice(0, 2).join(" ・ ") || "まだ入力していません") : "動画の最後に入れません";
+  // 合計
+  const used = P.items.filter(i => !i.skip);
+  const tot = (ci ? c.len : 0) + used.reduce((a, i) => a + effLen(i), 0) + (P.end.on ? P.end.len : 0);
+  $("#total").innerHTML = `合計 <b>${tot.toFixed(1)}秒</b>(${used.length}カット) ${tot > 0 && (tot < 12 || tot > 35) ? "・ 15〜30秒がおすすめ" : ""}`;
+  $("#makeBtn").disabled = !(used.length || ci);
+}
+const effLen = it => it.kind === "video" && it.dur && it.dur < it.len ? +it.dur.toFixed(1) : it.len;
+function move(i, d){ const j = i + d; if (j < 0 || j >= P.items.length) return; [P.items[i], P.items[j]] = [P.items[j], P.items[i]]; save(); renderMain(); }
+
+function seg(sel, get, set){
+  const root = $(sel);
+  const paint = () => root.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === String(get())));
+  root.querySelectorAll("button").forEach(b => b.onclick = () => { set(isNaN(+b.dataset.v) ? b.dataset.v : +b.dataset.v); paint(); });
+  paint(); return paint;
+}
+function bindSettings(){
+  const fc = $("#fontChips"); fc.innerHTML = "";
+  FONTS.forEach(f => { const b = document.createElement("button"); b.textContent = f.label; b.style.fontFamily = f.css; b.className = f.k === P.set.font ? "on" : ""; b.onclick = () => { P.set.font = f.k; save(); bindSettings(); }; fc.appendChild(b); });
+  seg("#posSeg", () => P.set.pos, v => { P.set.pos = v; save(); });
+  seg("#soundSeg", () => P.set.sound, v => { P.set.sound = v; save(); });
+  seg("#defLenSeg", () => P.set.defLen, v => { P.set.defLen = v; save(); });
+  $("#safeChk").checked = P.set.safe; $("#safeChk").onchange = e => { P.set.safe = e.target.checked; save(); };
+}
+$("#resetBtn").onclick = () => {
+  const b = $("#resetBtn");
+  if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = "もう一度押すと全部消えます"; setTimeout(() => { delete b.dataset.arm; b.textContent = "すべて消して新しく始める"; }, 3000); return; }
+  delete b.dataset.arm; b.textContent = "すべて消して新しく始める";
+  P.items.forEach(it => delMedia(it.mediaId)); const keep = P.set; P = blank(); P.set = keep; save(); renderMain(); toast("新しく始めます");
+};
+
+// ================= プレビュー共通 =================
+let pvLoop = null;
+function stopPv(){ cancelAnimationFrame(pvLoop); pvLoop = null; }
+function pvCtx(cv){ const ctx = cv.getContext("2d"); ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0); return ctx; }
+const pvVideo = document.createElement("video"); pvVideo.playsInline = true; pvVideo.muted = true; pvVideo.preload = "auto";
+async function sourceFor(it){
+  if (!it) return null;
+  if (it.kind === "image") return await imgFor(it);
+  const u = await urlFor(it.mediaId); if (!u) return null;
+  if (pvVideo.dataset.id !== it.id) { pvVideo.dataset.id = it.id; pvVideo.src = u; await new Promise(r => { pvVideo.onloadeddata = r; setTimeout(r, 4000); }); }
+  return pvVideo;
+}
+function seekPv(t){ return new Promise(r => { if (Math.abs(pvVideo.currentTime - t) < .02) return r(); pvVideo.onseeked = () => r(); pvVideo.currentTime = t; setTimeout(r, 1500); }); }
+function playRange(start, len, draw){
+  stopPv(); const t0 = performance.now();
+  pvVideo.currentTime = start; pvVideo.play().catch(()=>{});
+  const tick = () => { const t = (performance.now() - t0)/1000; draw(Math.min(t, len)); if (t < len) pvLoop = requestAnimationFrame(tick); else { pvVideo.pause(); seekPv(start).then(() => draw(0)); } };
+  tick();
+}
+
+// ================= 素材の編集 =================
+let cur = null, curSrc = null;
+function catChips(root, get, set){
+  root.innerHTML = "";
+  CATS.forEach(n => { const b = document.createElement("button"); b.textContent = n; b.className = n === get() ? "on" : ""; b.onclick = () => { set(n); catChips(root, get, set); }; root.appendChild(b); });
+}
+async function openItem(it){
+  cur = it; $("#itemOv").classList.add("show");
+  $("#itemText").value = it.text; $("#itemSub").value = it.sub; $("#itemSkip").checked = !!it.skip;
+  catChips($("#itemCats"), () => cur.cat, v => { cur.cat = v; save(); renderMain(); });
+  seg("#itemLen", () => cur.len, v => { cur.len = v; updItemTrim(); save(); renderMain(); drawItem(0); });
+  $("#itemTrim").style.display = it.kind === "video" ? "" : "none";
+  $("#itemPlay").textContent = it.kind === "video" ? "▶ 再生" : "▶ 動きを確認";
+  await loadFonts();
+  curSrc = await sourceFor(it);
+  updItemTrim();
+  if (it.kind === "video") await seekPv(it.start);
+  drawItem(0);
+}
+function updItemTrim(){
+  if (cur.kind !== "video") return;
+  const max = Math.max(0, (cur.dur || 0) - cur.len); const r = $("#itemRange");
+  r.max = max.toFixed(1); if (cur.start > max) cur.start = +max.toFixed(1); r.value = cur.start; r.disabled = max <= 0;
+  $("#itemHint").textContent = cur.dur && cur.dur < cur.len ? `動画が短いので全体(${cur.dur.toFixed(1)}秒)を使います` : `${cur.start.toFixed(1)}秒 〜 ${(cur.start + cur.len).toFixed(1)}秒 を使います`;
+}
+function drawItem(t){
+  const ctx = pvCtx($("#itemCv"));
+  drawMedia(ctx, curSrc, cur.kind, t, cur.len); drawCaption(ctx, cur, t + .3);
+  if (P.set.safe) drawSafe(ctx);
+}
+$("#itemRange").oninput = async e => { stopPv(); cur.start = +e.target.value; updItemTrim(); await seekPv(cur.start); drawItem(0); save(); };
+$("#itemText").oninput = e => { cur.text = e.target.value; drawItem(1); save(); };
+$("#itemSub").oninput = e => { cur.sub = e.target.value; drawItem(1); save(); };
+$("#itemSkip").onchange = e => { cur.skip = e.target.checked; save(); renderMain(); };
+$("#itemPlay").onclick = () => {
+  if (cur.kind === "video") playRange(cur.start, effLen(cur), drawItem);
+  else { stopPv(); const t0 = performance.now(); const tick = () => { const t = (performance.now()-t0)/1000; drawItem(Math.min(t, cur.len)); if (t < cur.len) pvLoop = requestAnimationFrame(tick); }; tick(); }
+};
+$("#itemCover").onclick = () => { setCover(cur.id); closeItem(); openCover(); };
+$("#itemDel").onclick = () => {
+  const b = $("#itemDel");
+  if (!b.dataset.arm) { b.dataset.arm = 1; b.textContent = "本当に削除"; setTimeout(() => { delete b.dataset.arm; b.textContent = "削除"; }, 2500); return; }
+  delete b.dataset.arm; b.textContent = "削除";
+  P.items = P.items.filter(x => x !== cur); delMedia(cur.mediaId); imgs.delete(cur.id);
+  if (P.cover.itemId === cur.id) P.cover.itemId = null;
+  save(); closeItem();
+};
+async function closeItem(){
+  stopPv(); pvVideo.pause(); $("#itemOv").classList.remove("show");
+  if (cur && cur.kind === "video" && byId(cur.id)) { const u = await urlFor(cur.mediaId); cur.thumb = await videoThumb(u, cur.start + .2) || cur.thumb; save(); }
+  renderMain();
+}
+$("#itemClose").onclick = closeItem;
+
+// ================= 表紙の編集 =================
+let coverSrc = null;
+function setCover(id){ const it = byId(id); P.cover.itemId = id; P.cover.start = it ? it.start : 0; save(); }
+async function openCover(){
+  $("#coverOv").classList.add("show");
+  const c = P.cover;
+  $("#cName").value = c.name; $("#cArea").value = c.area; $("#cExtra").value = c.extra; $("#cPR").checked = c.pr;
+  seg("#coverLen", () => P.cover.len, v => { P.cover.len = v; updCoverTrim(); save(); renderMain(); });
+  await loadFonts(); refreshCover();
+}
+async function refreshCover(){
+  const strip = $("#coverStrip"); strip.innerHTML = "";
+  const add = document.createElement("button"); add.className = "s add"; add.textContent = "＋";
+  add.onclick = () => { albumTarget = "cover"; $("#albumInput").value = ""; $("#albumInput").click(); };
+  strip.appendChild(add);
+  P.items.forEach(it => {
+    const b = document.createElement("button"); b.className = "s" + (P.cover.itemId === it.id ? " on" : "");
+    b.innerHTML = it.thumb ? `<img src="${it.thumb}" alt="">` : "";
+    b.onclick = () => { setCover(it.id); refreshCover(); renderMain(); };
+    strip.appendChild(b);
+  });
+  const it = byId(P.cover.itemId);
+  coverSrc = await sourceFor(it);
+  $("#coverTrim").style.display = it && it.kind === "video" ? "" : "none";
+  updCoverTrim();
+  if (it && it.kind === "video") await seekPv(P.cover.start);
+  drawCoverPv(0);
+}
+function updCoverTrim(){
+  const it = byId(P.cover.itemId); if (!it || it.kind !== "video") return;
+  const max = Math.max(0, (it.dur || 0) - P.cover.len); const r = $("#coverRange");
+  r.max = max.toFixed(1); if (P.cover.start > max) P.cover.start = +max.toFixed(1); r.value = P.cover.start; r.disabled = max <= 0;
+  $("#coverHint").textContent = `${P.cover.start.toFixed(1)}秒 〜 を使います`;
+}
+function drawCoverPv(t){
+  const ctx = pvCtx($("#coverCv")), it = byId(P.cover.itemId);
+  drawMedia(ctx, coverSrc, it ? it.kind : "image", t, P.cover.len);
+  if (!it) { ctx.fillStyle = "#1d1a17"; ctx.fillRect(0,0,W,H); ctx.fillStyle = "#a39887"; ctx.font = `500 44px ${SANS}`; ctx.textAlign = "center"; ctx.fillText("下から素材を選んでください", W/2, H/2 + 300); ctx.textAlign = "left"; }
+  drawCoverText(ctx); if (P.set.safe) drawSafe(ctx);
+}
+$("#coverRange").oninput = async e => { stopPv(); P.cover.start = +e.target.value; updCoverTrim(); await seekPv(P.cover.start); drawCoverPv(0); save(); };
+["cName:name","cArea:area","cExtra:extra"].forEach(s => { const [id, k] = s.split(":"); $("#"+id).oninput = e => { P.cover[k] = e.target.value; drawCoverPv(0); save(); renderMain(); }; });
+$("#cPR").onchange = e => { P.cover.pr = e.target.checked; drawCoverPv(0); save(); };
+$("#coverPlay").onclick = () => { const it = byId(P.cover.itemId); if (!it) return; if (it.kind === "video") playRange(P.cover.start, P.cover.len, drawCoverPv); else { stopPv(); const t0 = performance.now(); const tick = () => { const t = (performance.now()-t0)/1000; drawCoverPv(Math.min(t, P.cover.len)); if (t < P.cover.len) pvLoop = requestAnimationFrame(tick); }; tick(); } };
+$("#coverClear").onclick = () => { P.cover.itemId = null; save(); refreshCover(); renderMain(); };
+$("#coverClose").onclick = () => { stopPv(); pvVideo.pause(); $("#coverOv").classList.remove("show"); renderMain(); };
+$("#coverSlot").onclick = openCover;
+
+// ================= 店舗情報の編集 =================
+const endFields = {eAddress:"address", eAccess:"access", eHours:"hours", eClosed:"closed", eBudget:"budget", eReserve:"reserve", eOther:"other", eCta:"cta", eGenre:"genre"};
+let endBg = null;
+async function bgImage(){
+  const it = byId(P.cover.itemId) || P.items.find(i => i.thumb);
+  return it && it.thumb ? await loadImg(it.thumb) : null;
+}
+async function openEnd(){
+  $("#endOv").classList.add("show");
+  Object.entries(endFields).forEach(([id, k]) => { $("#"+id).value = P.end[k]; $("#"+id).oninput = e => { P.end[k] = e.target.value; drawEndPv(); save(); renderMain(); }; });
+  $("#eOn").checked = P.end.on; $("#eOn").onchange = e => { P.end.on = e.target.checked; save(); renderMain(); };
+  seg("#endLen", () => P.end.len, v => { P.end.len = v; save(); renderMain(); });
+  await loadFonts(); endBg = await bgImage(); drawEndPv();
+}
+function drawEndPv(){ const ctx = pvCtx($("#endCv")); drawEnd(ctx, endBg, 1); if (P.set.safe) drawSafe(ctx); }
+$("#endSlot").onclick = openEnd;
+$("#endClose").onclick = () => { $("#endOv").classList.remove("show"); renderMain(); };
+
+// ================= 書き出し =================
+let result = null;
+function pickMime(){
+  const l = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4;codecs=avc1","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"];
+  for (const t of l) try { if (MediaRecorder.isTypeSupported(t)) return t; } catch(e) {}
+  return "";
+}
+const wait = (el, ev, ms) => new Promise(r => { let d = false; const f = () => { if (d) return; d = true; el.removeEventListener(ev, f); r(); }; el.addEventListener(ev, f); setTimeout(f, ms || 6000); });
+$("#makeBtn").onclick = () => {
+  // iPhoneで音つき再生を許可させるため、ここまでは同期処理
+  let ac = null, dest = null;
+  if (P.set.sound === "on") { try { ac = new (window.AudioContext || window.webkitAudioContext)(); dest = ac.createMediaStreamDestination(); ac.resume(); } catch(e) { ac = null; } }
+  const vids = [];
+  const mk = it => {
+    if (it.kind !== "video") return {kind: "image", it};
+    const v = document.createElement("video"); v.playsInline = true; v.preload = "auto"; v.src = urls.get(it.mediaId); v.muted = !ac;
+    v.style.cssText = "position:fixed;width:2px;height:2px;opacity:0;pointer-events:none;left:0;top:0";
+    document.body.appendChild(v); vids.push(v);
+    if (ac) { try { ac.createMediaElementSource(v).connect(dest); } catch(e) { v.muted = true; } }
+    v.play().then(() => v.pause()).catch(() => {});
+    return {kind: "video", it, el: v};
+  };
+  const segs = [];
+  const ci = byId(P.cover.itemId);
+  if (ci) segs.push(Object.assign(mk(ci), {type: "cover", start: ci.kind === "video" ? P.cover.start : 0, dur: P.cover.len}));
+  P.items.filter(i => !i.skip).forEach(it => segs.push(Object.assign(mk(it), {type: "item", start: it.kind === "video" && !(it.dur && it.dur < it.len) ? it.start : 0, dur: effLen(it)})));
+  if (P.end.on) segs.push({type: "end", dur: P.end.len});
+  runRender(segs, dest).catch(err => {
+    console.error(err);
+    $("#rTitle").textContent = "うまく作れませんでした";
+    setMsg("このブラウザでは書き出しに対応していない可能性があります", true);
+  }).finally(() => { vids.forEach(v => { v.pause(); v.remove(); }); if (ac) setTimeout(() => ac.close().catch(()=>{}), 500); });
+};
+function setMsg(t, err){ const m = $("#rMsg"); m.textContent = t; m.classList.toggle("err", !!err); }
+async function runRender(segs, dest){
+  result = null; $("#rTitle").textContent = "動画をつくっています"; setMsg("画面を開いたままお待ちください");
+  $("#rDone").hidden = true; $("#pfill").style.width = "0%";
+  const box = $("#rBox"); box.innerHTML = "";
+  const canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H; box.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  $("#renderOv").classList.add("show");
+  await loadFonts();
+  for (const s of segs) {
+    if (s.kind === "video" && s.el.readyState < 2) await wait(s.el, "loadeddata");
+    if (s.kind === "image") s.el = await imgFor(s.it);
+  }
+  const bg = await bgImage();
+  if (typeof MediaRecorder === "undefined" || !canvas.captureStream) throw new Error("no recorder");
+  const stream = canvas.captureStream(30);
+  if (dest) dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+  const mime = pickMime();
+  const rec = new MediaRecorder(stream, mime ? {mimeType: mime, videoBitsPerSecond: 10e6} : {});
+  const chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  const stopped = new Promise(r => rec.onstop = r);
+  const total = segs.reduce((a, s) => a + s.dur, 0); let before = 0;
+  const frame = (s, t) => {
+    if (s.type === "end") return drawEnd(ctx, bg, t);
+    drawMedia(ctx, s.el, s.kind, t, s.dur);
+    if (s.type === "cover") drawCoverText(ctx); else drawCaption(ctx, s.it, t);
+  };
+  if (segs[0].kind === "video") { segs[0].el.currentTime = segs[0].start; await wait(segs[0].el, "seeked", 3000); }
+  frame(segs[0], 0);
+  rec.start(250);
+  for (const s of segs) {
+    if (s.kind === "video") {
+      const v = s.el; v.pause(); if (Math.abs(v.currentTime - s.start) > .05) { v.currentTime = s.start; await wait(v, "seeked", 3000); }
+      try { await v.play(); } catch(e) { v.muted = true; try { await v.play(); } catch(e2) {} }
+    }
+    const t0 = performance.now();
+    await new Promise(res => {
+      const tick = () => {
+        const t = (performance.now() - t0) / 1000;
+        frame(s, Math.min(t, s.dur));
+        $("#pfill").style.width = Math.min(100, (before + t) / total * 100) + "%";
+        if (t >= s.dur) return res();
+        requestAnimationFrame(tick);
+      };
+      tick();
+    });
+    if (s.kind === "video") s.el.pause();
+    before += s.dur;
+  }
+  await new Promise(r => setTimeout(r, 150));
+  rec.stop(); await stopped; stream.getTracks().forEach(t => t.stop());
+  const type = (rec.mimeType || mime || "video/webm").split(";")[0];
+  const blob = new Blob(chunks, {type});
+  result = {blob, ext: type.includes("mp4") ? "mp4" : "webm"};
+  box.innerHTML = ""; const out = document.createElement("video");
+  out.src = URL.createObjectURL(blob); out.controls = true; out.playsInline = true; out.loop = true; box.appendChild(out); out.play().catch(()=>{});
+  $("#pfill").style.width = "100%"; $("#rTitle").textContent = "できあがり";
+  setMsg(`${total.toFixed(1)}秒 ・ ${(blob.size/1048576).toFixed(1)}MB${result.ext === "webm" ? " ・ WebM形式" : ""}`);
+  $("#caption").value = makeCaption(); $("#rDone").hidden = false;
+}
+function makeCaption(){
+  const c = P.cover, e = P.end, area = (c.area || "").replace(/\s/g, ""), genre = (e.genre || "").replace(/\s/g, "");
+  const head = [area, genre].filter(Boolean).join("");
+  const lines = [];
+  lines.push(`${head ? head + "｜" : ""}${c.name || ""}${c.extra ? " " + c.extra : ""}`.trim());
+  lines.push("");
+  if (e.address) lines.push(`📍${e.address}`);
+  if (e.access) lines.push(`🚃${e.access}`);
+  if (e.hours) lines.push(`⏰${e.hours}`);
+  if (e.closed) lines.push(`💤${e.closed}`);
+  if (e.budget) lines.push(`💰${e.budget}`);
+  if (e.reserve) lines.push(`📞${e.reserve}`);
+  lines.push(""); lines.push("行きたいと思ったら保存してね🔖");
+  const tags = [];
+  if (c.pr) tags.push("#PR");
+  if (area) tags.push(`#${area}グルメ`);
+  if (area && genre) tags.push(`#${area}${genre}`);
+  if (genre) tags.push(`#${genre}`);
+  if (area) tags.push(`#${area}ディナー`);
+  if (tags.length < 5) tags.push("#グルメ");
+  lines.push(""); lines.push(tags.slice(0, c.pr ? 6 : 5).join(" "));
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+let downloadsP = Promise.resolve(null);
+try { if (window.claude && claude.use) downloadsP = claude.use("downloads").catch(() => null); } catch(e) {}
+$("#saveBtn").onclick = async () => {
+  if (!result) return;
+  const name = `courselog_${(P.cover.name || "video").replace(/[\\/:*?"<>|\s]+/g, "_")}.${result.ext}`;
+  const dl = await downloadsP;
+  if (dl) {
+    try { await dl.save({filename: name, data: result.blob}); setMsg("保存しました"); }
+    catch(e) { setMsg(e && e.code === "declined" ? "保存をキャンセルしました" : "保存できませんでした", !(e && e.code === "declined")); }
+    return;
+  }
+  const file = new File([result.blob], name, {type: result.blob.type});
+  if (navigator.canShare && navigator.canShare({files: [file]})) {
+    try { await navigator.share({files: [file]}); setMsg("「ビデオを保存」でカメラロールに保存できます"); return; } catch(e) { if (e && e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(result.blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+};
+$("#copyBtn").onclick = async () => {
+  try { await navigator.clipboard.writeText($("#caption").value); toast("コピーしました"); }
+  catch(e) { const t = $("#caption"); t.focus(); t.select(); toast("選択しました。長押しでコピーしてください"); }
+};
+$("#rClose").onclick = () => { $("#renderOv").classList.remove("show"); const v = $("#rBox video"); if (v) v.pause(); };
+
+// ================= 起動 =================
+(async () => {
+  db = await openDB();
+  if (db) {
+    try { const s = await tx("kv", "readonly", st => st.get("project")); if (s) { const b = blank(); const o = JSON.parse(s); P = Object.assign(b, o, {cover: Object.assign(b.cover, o.cover), end: Object.assign(b.end, o.end), set: Object.assign(b.set, o.set)}); } } catch(e) {}
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e) {}
+    // 動画データが消えていたら一覧から外す
+    const ok = [];
+    for (const it of P.items) { if (await urlFor(it.mediaId)) ok.push(it); }
+    if (ok.length !== P.items.length) { P.items = ok; save(); }
+    setStatus(P.items.length ? `前回の続きから(${P.items.length}件)・自動保存中` : "この端末に自動保存されます");
+  } else setStatus("この画面では自動保存できません。閉じると素材が消えます", true);
+  bindSettings(); renderMain();
+})();
+})();
+</script>
+</body>
+</html>
